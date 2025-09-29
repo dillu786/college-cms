@@ -2,13 +2,37 @@ import express from "express";
 import cors from "cors";
 import {prismaClient} from "db/client"
 import { middleware } from "./middlware";
-import { SigninSchema } from "common/inputs";
+import { SigninSchema,SignupSchema } from "common/inputs";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 const app = express();
 app.use(cors());
 app.use(express.json())
 
+app.post("/signup", async (req, res)=>{
+    const parsedBody = SignupSchema.safeParse(req.body);
+    if(!parsedBody.success){
+        return res.status(400).json({
+            message: 'Invalid body'
+        });
+
+        //passoword: random123
+        const user = await prismaClient.user.create({
+            data:{
+            
+                email: parsedBody.data?.email as string,
+                password: bcrypt.hash(parsedBody.data?.password as string,10) as unknown as string,
+                phone: parsedBody.data?.phone as string,
+                name: parsedBody.data?.name as string
+            }
+        });
+
+        res.status(201).json({
+            message: "User successfully created"
+    
+        });
+    }
+})
 app.post("/signin",async (req, res)=>{
 
     const parsedBody = SigninSchema.safeParse(req.body);
